@@ -1,0 +1,404 @@
+<html>
+<head>
+  <title>IPFS Gateway Selector</title>
+  <link rel="stylesheet" href="./bootstrap.min.css">
+  <script src="./jquery.min.js"></script>
+  <script src="./jsrender.min.js"></script>
+  <script src="./jquery-dateformat.min.js"></script>
+  <script src="./bootstrap.bundle.min.js"></script>
+  <script src="http://bafybeiertr7w4h3bvuqw4lnl2brn7rnalqy7irgcb4myrbjbv5galm6plm.ipfs.ipfs.stibarc.com/translations.js"></script>
+</head>
+<body class="bg-light">
+  <header></header>
+
+  <main>
+    <div class="container">
+      <div id="row1" class="row"></div>
+      <div id="row2" class="row"></div>
+    </div>
+  </main>
+
+  <footer class="footer mt-auto py-3">
+    <div class="container">
+      <span class="text-muted">
+        <p>
+          Designed and built by <a href="https://github.com/iosetting">IOsetting</a>. 
+          Currently <a href="https://github.com/iosetting/ipfs-gateway-selector">v1.0.0</a>. Code licensed GPL-3.0.
+        </p>
+      </span>
+    </div>
+  </footer>
+</body>
+
+<script id="tpl_header" type="text/x-jsrender">
+  <div class="container">
+    <div class="pt-4">
+      <h2>{{:#data["IPFS Gateway Selector"]}}</h2>
+    </div>
+  </div>
+</script>
+
+<script id="tpl_row1" type="text/x-jsrender">
+  <div class="col-md-10 mb-4">
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">ipfs/</span>
+      </div>
+      <input id="cid" type="text" class="form-control" placeholder="Input the CID" aria-label="CID">
+      <div class="input-group-append">
+        <a id="btn_reload" class="btn btn-primary" type="button">{{:#data['Reload Gateways']}}</a>
+      </div>
+    </div>
+  </div>
+</script>
+
+<script id="tpl_row2" type="text/x-jsrender">
+  <div class="col-lg-8 order-lg-2 mb-4">
+    <h4 class="d-flex justify-content-between align-items-center mb-3">
+      <span>{{:Gateways}}</span>
+      <a id="btn_test" class="btn btn-secondary btn-sm" type="submit">{{:Retest}}</a>
+    </h4>
+    <ul class="list-group mb-3" id="gw_list">
+      <li class="list-group-item d-flex justify-content-between lh-condensed">
+        <div>No Gateways</div>
+        <span class="text-muted"></span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="col-lg-4 order-lg-1">
+    <h4 class="mb-3">{{:Configurations}}</h4>
+    <form class="needs-validation" novalidate="">
+      <div class="mb-3">
+        <label for="gateway_source">{{:#data['Gateway Source']}}</label>
+        <select id="gateway_source_selector" class="form-control mb-2">
+        </select>
+        <input type="text" class="form-control" id="gateway_source" placeholder="" value="" required="">
+        <div class="invalid-feedback">
+          Gateway source URL is required.
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="sample_probe_id">{{:#data['Probe CID']}}</label>
+        <input type="text" class="form-control" id="sample_probe_id" placeholder="" value="" required="">
+          <div class="invalid-feedback">
+            Probe CID is required.
+          </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8 mb-3">
+          <label for="timeout">{{:Timeout}}</label>
+          <input type="text" class="form-control" id="timeout" placeholder="" required="">
+        </div>
+      </div>
+    </form>
+    
+    <h4 class="d-flex justify-content-between align-items-center mb-3">
+      <span>{{:History}}</span>
+      <a id="btn_clear" class="btn btn-secondary btn-sm" type="submit">{{:Clear}}</a>
+    </h4>
+    <ul class="list-group mb-3" id="history_list">
+      <li class="list-group-item d-flex justify-content-between lh-condensed">
+        <div>No History</div>
+        <span class="text-muted"></span>
+      </li>
+    </ul>
+  </div>
+</script>
+
+<script>
+document.documentElement.lang = navigator.language;
+var BOOTUP_URL = window.location.href.substr(0, window.location.href.lastIndexOf('/'));
+var TIMEOUT = 2000;
+var PROBE_ID = 'Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a';
+var INLINE_GATEWAYS = [
+	  "https://ipfs.io/ipfs/:hash",
+	  "https://dweb.link/ipfs/:hash",
+	  "https://gateway.ipfs.io/ipfs/:hash",
+	  "https://ipfs.infura.io/ipfs/:hash",
+	  "https://ninetailed.ninja/ipfs/:hash",
+	  "https://10.via0.com/ipfs/:hash",
+	  "https://ipfs.eternum.io/ipfs/:hash",
+	  "https://hardbin.com/ipfs/:hash",
+	  "https://cloudflare-ipfs.com/ipfs/:hash",
+	  "https://cf-ipfs.com/ipfs/:hash",
+	  "https://gateway.originprotocol.com/ipfs/:hash",
+	  "https://gateway.pinata.cloud/ipfs/:hash",
+	  "https://ipfs.sloppyta.co/ipfs/:hash",
+	  "https://ipfs.greyh.at/ipfs/:hash",
+	  "https://gateway.serph.network/ipfs/:hash",
+	  "https://jorropo.ovh/ipfs/:hash",
+	  "https://jorropo.net/ipfs/:hash",
+	  "https://gateway.temporal.cloud/ipfs/:hash",
+	  "https://permaweb.io/ipfs/:hash",
+	  "https://ipfs.stibarc.com/ipfs/:hash",
+	  "https://ipfs.best-practice.se/ipfs/:hash",
+	  "https://2read.net/ipfs/:hash",
+	  "https://ipfs.2read.net/ipfs/:hash",
+	  "https://storjipfs-gateway.com/ipfs/:hash",
+	  "https://ipfs.runfission.com/ipfs/:hash",
+	  "https://trusti.id/ipfs/:hash",
+	  "https://apac.trusti.id/ipfs/:hash",
+	  "https://ipfs.overpi.com/ipfs/:hash",
+	  "https://ipfs.lc/ipfs/:hash",
+	  "https://ipfs.leiyun.org/ipfs/:hash",
+	  "https://ipfs.ink/ipfs/:hash",
+	  "https://ipfs.jes.xxx/ipfs/:hash",
+	  "https://ipfs.oceanprotocol.com/ipfs/:hash",
+	  "https://gateway.ravenland.org/ipfs/:hash",
+	  "https://ipfs.smartsignature.io/ipfs/:hash",
+	  "https://ipfs.funnychain.co/ipfs/:hash",
+	  "https://ipfs.telos.miami/ipfs/:hash",
+	  "https://robotizing.net/ipfs/:hash",
+	  "https://ipfs.mttk.net/ipfs/:hash",
+	  "https://ipfs.fleek.co/ipfs/:hash",
+	  "https://ipfs.jbb.one/ipfs/:hash",
+	  "https://ipfs.yt/ipfs/:hash",
+	  "https://jacl.tech/ipfs/:hash",
+	  "https://ipfs.k1ic.com/ipfs/:hash",
+	  "https://ipfs.drink.cafe/ipfs/:hash",
+	  "https://ipfs.azurewebsites.net/ipfs/:hash",
+	  "https://gw.ipfspin.com/ipfs/:hash"
+  ];
+var GATEWAY_SOURCES = {
+    "Built-in Gateways": "[built-in list]",
+    "Official Gateway Checker": "https://raw.githubusercontent.com/ipfs/public-gateway-checker/master/gateways.json",
+    "Custom": ""
+  };
+
+var translations = L[detect_language()];
+var gateways = [];
+var cid = '';
+
+
+$(document).ready(function() {
+  rend_page();
+
+  var queryParams = new URLSearchParams(window.location.search);
+  
+  var source_custom = localStorage.getItem('source_custom');
+  if (!is_null(source_custom) && source_custom.length > 0) {
+    GATEWAY_SOURCES['Custom'] = source_custom;
+  }
+
+  $('#gateway_source_selector').empty();
+  for (var key in GATEWAY_SOURCES) {
+    $('#gateway_source_selector').append('<option value="'+GATEWAY_SOURCES[key]+'">'+key+'</option>');
+  }
+  $('#gateway_source_selector').on('change', function(){
+    var selected = $("#gateway_source_selector option:selected");
+    $('#gateway_source').val(selected.val());
+    localStorage.setItem('source_selected', selected.text());
+    if (selected.text() == 'Custom') {
+      $('#gateway_source').prop('readonly', false);
+    } else {
+      $('#gateway_source').prop('readonly', true);
+    }
+  });
+
+  var source_selected = localStorage.getItem('source_selected');
+  console.log(source_selected);
+  if (is_null(source_selected)) {
+    source_selected = 'Built-in Gateways';
+  }
+  $('#gateway_source_selector').val(GATEWAY_SOURCES[source_selected]).change();
+  localStorage.setItem('source_selected', source_selected);
+
+  $('#sample_probe_id').val(PROBE_ID);
+
+  var cid = extract_cid(queryParams.get('cid'));
+  $('#cid').attr("value", cid).on("paste", function(e){
+    var element = this;
+    setTimeout(function () {
+      var text = $(element).val();
+      console.log(text);
+      $(element).val(extract_cid(text));
+      console.log(extract_cid(text));
+    }, 100);
+  });
+  
+  $('#timeout').attr("value", TIMEOUT);
+
+  $('#btn_reload').click(function(){
+    fetch_gateways(test_all);
+  });
+
+  $('#btn_test').click(function(){
+    test_all();
+  });
+  
+  $('#btn_clear').click(function(){
+    clear_history();
+  });
+
+  if (gateways.length == 0) {
+    fetch_gateways(test_all);
+  }
+});
+
+function rend_page() {
+  $('header').html($.templates("#tpl_header").render(translations));
+  $('#row1').html($.templates("#tpl_row1").render(translations));
+  $('#row2').html($.templates("#tpl_row2").render(translations));
+}
+
+function fetch_gateways(onfinish) {
+  add_history($('#cid').val());
+  var selected_source = $("#gateway_source_selector option:selected").text();
+  $("#gw_list").empty();
+  $("#gw_list").append('<li class="list-group-item d-flex justify-content-between lh-condensed"><div>Loading</div><span></span></li>');
+  gateways = [];
+  if (selected_source == 'Built-in Gateways') {
+    $("#gw_list").empty();
+    for (i in INLINE_GATEWAYS) {
+      gateways.push(INLINE_GATEWAYS[i]);
+      var domain = INLINE_GATEWAYS[i].replace('http://','').replace('https://','').split(/[/?#]/)[0];
+      var link = INLINE_GATEWAYS[i].replace(':hash', $('#cid').val());
+      var li = '<li id="gw_'+ i +'" class="list-group-item d-flex justify-content-between lh-condensed">' +
+        '<div><a href="' + link + '">' + domain + '</a></div><span></span></li>';
+      $("#gw_list").append(li);
+    }
+    onfinish();
+  } else {
+    var url = $('#gateway_source').val();
+    if (selected_source == 'Custom') {
+      localStorage.setItem('source_custom', url);
+    }
+    $.ajax({
+      url: url,
+      method: 'GET',
+      timeout: $('#timeout').val(),
+      dataType: 'json'
+    }).done(function(json){
+      $("#gw_list").empty();
+      for (i in json) {
+        gateways.push(json[i]);
+        var domain = json[i].replace('http://','').replace('https://','').split(/[/?#]/)[0];
+        var link = json[i].replace(':hash', $('#cid').val());
+        var li = '<li id="gw_'+ i +'" class="list-group-item d-flex justify-content-between lh-condensed">' +
+          '<div><a href="' + link + '">' + domain + '</a></div><span></span></li>';
+        $("#gw_list").append(li);
+      }
+      onfinish();
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+      $("#gw_list li div").text('Failed: ' + jqXHR.statusText);
+    });
+  }
+
+}
+
+function test_all() {
+  for (i in gateways) {
+    test_speed(i);
+  }
+}
+
+function test_speed(i) {
+  var url = gateways[i].replace(/:hash/, $('#sample_probe_id').val());
+  console.log("Testing " + url);
+  $('#gw_' + i + ' span').empty();
+  var started_at = (new Date()).getTime();
+  $.ajax({
+    url: url,
+    method: 'GET',
+    timeout: $('#timeout').val(),
+    dataType: 'text'
+  }).done(function(data) {
+    var latency = (new Date()).getTime() - started_at;
+    setTimeout(function () {
+      $('#gw_' + i + ' span').text(latency + ' ms');
+      if (latency < 300) {
+        $('#gw_' + i + ' span').attr('class', 'text-success');
+      } else if (latency < 600) {
+        $('#gw_' + i + ' span').attr('class', 'text-warning');
+      } else {
+        $('#gw_' + i + ' span').attr('class', 'text-danger');
+      }
+    }, 200);
+
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    $('#gw_' + i + ' span').text(jqXHR.statusText);
+    $('#gw_' + i + ' span').attr('class', 'text-secondary');
+  });
+
+}
+
+function extract_cid(input) {
+  if (is_null(input)) {
+    return '';
+  }
+  var matches = input.match(/Qm[A-Za-z0-9]+/);
+  if (matches !== null && matches.length > 0) {
+    return matches[0];
+  }
+  return '';
+}
+
+function add_history(cid) {
+  var history_json = localStorage.getItem('cid_history');
+  if (is_null(history_json)) {
+    history_json = '[]';
+  }
+  var histories = JSON.parse(history_json);
+  if (cid.length > 16) {
+    var item = {'cid' : cid, 'time' : (new Date()).getTime()}; 
+    histories.unshift(item);
+    for (var i = 1; i < histories.length; i++) {
+      if (histories[i].cid == cid) {
+        histories.splice(i, 1);
+        break;
+      }
+    }
+    if (histories.length > 30) {
+      histories = histories.slice(0, 30);
+    }
+    localStorage.setItem('cid_history', JSON.stringify(histories));
+  }
+  reload_history();
+}
+
+function reload_history() {
+  $("#history_list").empty();
+  var history_json = localStorage.getItem('cid_history');
+  if (is_null(history_json)) {
+    history_json = '[]';
+  }
+  var histories = JSON.parse(history_json);
+  for (i in histories) {
+    var link = BOOTUP_URL + '/?cid=' + histories[i].cid;
+    var li = '<li class="list-group-item d-flex justify-content-between lh-condensed">' +
+      '<div><a href="' + link + '">' + shorten(histories[i].cid, 16) + '</a></div><span>'+$.format.date(histories[i].time, 'yyyy-MM-dd HH:mm:ss')+'</span></li>';
+    $("#history_list").append(li);
+  }
+}
+
+function clear_history() {
+  $("#history_list").empty();
+  localStorage.setItem('cid_history', '[]');
+}
+
+function detect_language() {
+  var lang = navigator.language || navigator.userLanguage;
+  if (lang.split('-')[0].toLowerCase() == 'zh') {
+    return 'zh-cn';
+  } else {
+    return 'en';
+  }
+}
+
+
+function is_null(v) {
+  return (v === undefined || v === null);
+}
+
+function shorten(v, len) {
+  var tail = len - 8;
+  if (tail < 4) tail = 4;
+  return v.substr(0, 5) + '...' + v.substr(cid.length - tail, tail);
+}
+
+</script>
+
+</html>
