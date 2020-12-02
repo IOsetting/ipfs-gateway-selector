@@ -1,12 +1,13 @@
 <html>
 <head>
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0" />
   <title>IPFS Gateway Selector</title>
   <link rel="stylesheet" href="./bootstrap.min.css">
   <script src="./jquery.min.js"></script>
   <script src="./jsrender.min.js"></script>
   <script src="./jquery-dateformat.min.js"></script>
   <script src="./bootstrap.bundle.min.js"></script>
-  <script src="http://bafybeiertr7w4h3bvuqw4lnl2brn7rnalqy7irgcb4myrbjbv5galm6plm.ipfs.ipfs.stibarc.com/translations.js"></script>
+  <script src="./translations.js"></script>
 </head>
 <body class="bg-light">
   <header></header>
@@ -23,7 +24,7 @@
       <span class="text-muted">
         <p>
           Designed and built by <a href="https://github.com/iosetting">IOsetting</a>. 
-          Currently <a href="https://github.com/iosetting/ipfs-gateway-selector">v1.0.0</a>. Code licensed GPL-3.0.
+          Currently <a href="https://github.com/iosetting/ipfs-gateway-selector">v1.0.1</a>. Code licensed GPL-3.0.
         </p>
       </span>
     </div>
@@ -44,7 +45,7 @@
       <div class="input-group-prepend">
         <span class="input-group-text" id="basic-addon1">ipfs/</span>
       </div>
-      <input id="cid" type="text" class="form-control" placeholder="Input the CID" aria-label="CID">
+      <input id="cid" type="text" class="form-control" placeholder="{{:#data['Input the CID']}}" aria-label="CID">
       <div class="input-group-append">
         <a id="btn_reload" class="btn btn-primary" type="button">{{:#data['Reload Gateways']}}</a>
       </div>
@@ -53,7 +54,7 @@
 </script>
 
 <script id="tpl_row2" type="text/x-jsrender">
-  <div class="col-lg-8 order-lg-2 mb-4">
+  <div class="col-lg-6 order-lg-2 mb-4">
     <h4 class="d-flex justify-content-between align-items-center mb-3">
       <span>{{:Gateways}}</span>
       <a id="btn_test" class="btn btn-secondary btn-sm" type="submit">{{:Retest}}</a>
@@ -66,7 +67,7 @@
     </ul>
   </div>
 
-  <div class="col-lg-4 order-lg-1">
+  <div class="col-lg-6 order-lg-1">
     <h4 class="mb-3">{{:Configurations}}</h4>
     <form class="needs-validation" novalidate="">
       <div class="mb-3">

@@ -1,6 +1,7 @@
 var L = {
 	'en' : {
 		'IPFS Gateway Selector' : 'IPFS Gateway Selector',
+		'Input the CID' : 'Input the CID',
 		'Reload Gateways' : 'Reload Gateways',
 		'Configurations' : 'Configurations',
 		'Gateway Source' : 'Gateway Source',
@@ -13,7 +14,8 @@ var L = {
 	},
 	'zh-cn' : {
 		'IPFS Gateway Selector' : 'IPFS下载网关选择',
-		'Reload Gateways' : '刷新下载列表',
+		'Input the CID' : 'CID',
+		'Reload Gateways' : '刷新列表',
 		'Configurations' : '配置',
 		'Gateway Source' : '网关来源',
 		'Probe CID' : '探测CID',
