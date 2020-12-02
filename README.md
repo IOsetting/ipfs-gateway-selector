@@ -17,15 +17,7 @@ https://ipfs.io/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1/?cid=QmbTf2W
 
 
 ## Try It
-This service should be available on any working gateways, for current release please visit with CID `QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1`
-* [ipfs.io](https://ipfs.io/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1)
-* [gateway.ipfs.io](https://gateway.ipfs.io/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1)
-* [ninetailed.ninja](https://ninetailed.ninja/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1)
-* [ipfs.eternum.io](https://ipfs.eternum.io/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1)
-* [ipfs.overpi.com](https://ipfs.overpi.com/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1)
-* [ipfs.ink](https://ipfs.ink/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1)
-* [gateway.originprotocol.com](https://gateway.originprotocol.com/ipfs/QmbTf2WJ9SFKqHAScuQ7kCUUwYaje3JQBSf2Hh1MSLvoC1)
-* many more gateways ...
+This service should be available on any working gateways, for quick entries please find the links in the latest [release](https://github.com/IOsetting/ipfs-gateway-selector/releases)
 
 ## License
 
