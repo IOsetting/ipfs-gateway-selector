@@ -48,7 +48,7 @@
       </div>
       <input id="cid" type="text" class="form-control" placeholder="{{:#data['Input the CID']}}" aria-label="CID">
       <div class="input-group-append">
-        <a id="btn_reload" class="btn btn-primary" type="button">{{:#data['Reload Gateways']}}</a>
+        <a id="btn_reload" class="btn btn-primary" type="button">{{:#data['Reload']}}</a>
       </div>
     </div>
   </div>
@@ -58,7 +58,10 @@
   <div class="col-lg-6 order-lg-2 mb-4">
     <h4 class="d-flex justify-content-between align-items-center mb-3">
       <span>{{:Gateways}}</span>
-      <a id="btn_test" class="btn btn-secondary btn-sm" type="submit">{{:Retest}}</a>
+      <span>
+        <a id="btn_lag_test" class="btn btn-secondary btn-sm" type="submit">{{:#data['Lag Test']}}</a>
+        <a id="btn_bw_test" class="btn btn-secondary btn-sm" type="submit">{{:#data['Speed Test']}}</a>
+      </span>
     </h4>
     <ul class="list-group mb-3" id="gw_list">
       <li class="list-group-item d-flex justify-content-between lh-condensed">
@@ -115,6 +118,8 @@ document.documentElement.lang = navigator.language;
 var BOOTUP_URL = window.location.href.substr(0, window.location.href.lastIndexOf('/'));
 var TIMEOUT = 2000;
 var PROBE_ID = 'Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a';
+var SAMPLE_FILE_ID = 'QmTH6JaaryUntMJf7Lw1YaH1qPKbAz9ca7gSkRZLRG5Fng/install-macos-drag-ipfs-drag.10ef3046.png';
+var SAMPLE_FILE_SIZE = 1525506;
 var INLINE_GATEWAYS = [
 	  "https://ipfs.io/ipfs/:hash",
 	  "https://dweb.link/ipfs/:hash",
@@ -224,11 +229,15 @@ $(document).ready(function() {
   $('#timeout').attr("value", TIMEOUT);
 
   $('#btn_reload').click(function(){
-    fetch_gateways(test_all);
+    fetch_gateways(test_all_lag);
   });
 
-  $('#btn_test').click(function(){
-    test_all();
+  $('#btn_lag_test').click(function(){
+    test_all_lag();
+  });
+
+  $('#btn_bw_test').click(function(){
+    test_all_speed();
   });
   
   $('#btn_clear').click(function(){
@@ -236,7 +245,7 @@ $(document).ready(function() {
   });
 
   if (gateways.length == 0) {
-    fetch_gateways(test_all);
+    fetch_gateways(test_all_lag);
   }
 });
 
@@ -255,11 +264,15 @@ function fetch_gateways(onfinish) {
   if (selected_source == 'Built-in Gateways') {
     $("#gw_list").empty();
     for (i in INLINE_GATEWAYS) {
-      gateways.push(INLINE_GATEWAYS[i]);
-      var domain = INLINE_GATEWAYS[i].replace('http://','').replace('https://','').split(/[/?#]/)[0];
-      var link = INLINE_GATEWAYS[i].replace(':hash', $('#cid').val());
+      var gw = {
+        'url' : INLINE_GATEWAYS[i],
+        'domain' : INLINE_GATEWAYS[i].replace('http://','').replace('https://','').split(/[/?#]/)[0],
+        'lag' : -1,
+        'speed' : -1
+      };
+      gateways.push(gw);
       var li = '<li id="gw_'+ i +'" class="list-group-item d-flex justify-content-between lh-condensed">' +
-        '<div><a href="' + link + '">' + domain + '</a></div><span></span></li>';
+        '<div><a href="' + gw.url.replace(':hash', $('#cid').val()) + '">' + gw.domain + '</a></div><span><span></span> <span></span></span></li>';
       $("#gw_list").append(li);
     }
     onfinish();
@@ -276,11 +289,15 @@ function fetch_gateways(onfinish) {
     }).done(function(json){
       $("#gw_list").empty();
       for (i in json) {
-        gateways.push(json[i]);
-        var domain = json[i].replace('http://','').replace('https://','').split(/[/?#]/)[0];
-        var link = json[i].replace(':hash', $('#cid').val());
+        var gw = {
+          'url' : json[i],
+          'domain' : json[i].replace('http://','').replace('https://','').split(/[/?#]/)[0],
+          'lag' : -1,
+          'speed' : -1
+        };
+        gateways.push(gw);
         var li = '<li id="gw_'+ i +'" class="list-group-item d-flex justify-content-between lh-condensed">' +
-          '<div><a href="' + link + '">' + domain + '</a></div><span></span></li>';
+          '<div><a href="' + gw.url.replace(':hash', $('#cid').val()) + '">' + gw.domain + '</a></div><span><span></span> <span></span></span></li>';
         $("#gw_list").append(li);
       }
       onfinish();
@@ -288,19 +305,18 @@ function fetch_gateways(onfinish) {
       $("#gw_list li div").text('Failed: ' + jqXHR.statusText);
     });
   }
-
 }
 
-function test_all() {
+function test_all_lag() {
   for (i in gateways) {
-    test_speed(i);
+    test_lag(i);
   }
 }
 
-function test_speed(i) {
-  var url = gateways[i].replace(/:hash/, $('#sample_probe_id').val());
-  console.log("Testing " + url);
-  $('#gw_' + i + ' span').empty();
+function test_lag(i) {
+  var url = gateways[i].url.replace(/:hash/, $('#sample_probe_id').val());
+  console.log("Test lag: " + url);
+  $('#gw_' + i + ' span span:nth-child(2)').empty();
   var started_at = (new Date()).getTime();
   $.ajax({
     url: url,
@@ -309,22 +325,59 @@ function test_speed(i) {
     dataType: 'text'
   }).done(function(data) {
     var latency = (new Date()).getTime() - started_at;
+    gateways[i].lag = latency;
     setTimeout(function () {
-      $('#gw_' + i + ' span').text(latency + ' ms');
+      $('#gw_' + i + ' span span:nth-child(2)').text(latency + ' ms');
       if (latency < 300) {
-        $('#gw_' + i + ' span').attr('class', 'text-success');
+        $('#gw_' + i + ' span span:nth-child(2)').attr('class', 'badge badge-success');
       } else if (latency < 600) {
-        $('#gw_' + i + ' span').attr('class', 'text-warning');
+        $('#gw_' + i + ' span span:nth-child(2)').attr('class', 'badge badge-warning');
       } else {
-        $('#gw_' + i + ' span').attr('class', 'text-danger');
+        $('#gw_' + i + ' span span:nth-child(2)').attr('class', 'badge badge-danger');
       }
     }, 200);
 
   }).fail(function(jqXHR, textStatus, errorThrown) {
-    $('#gw_' + i + ' span').text(jqXHR.statusText);
-    $('#gw_' + i + ' span').attr('class', 'text-secondary');
+    gateways[i].lag = -1;
+    $('#gw_' + i + ' span span:nth-child(2)').text(jqXHR.statusText).attr('class', 'badge badge-secondary');
   });
 
+}
+
+function test_all_speed() {
+  for (i in gateways) {
+    if (gateways[i].lag > 0) {
+      test_speed(i);
+    }
+  }
+}
+
+function test_speed(i) {
+  $('#gw_' + i + ' span span:nth-child(1)').empty();
+  var started_at = (new Date()).getTime();
+  var url = gateways[i].url.replace(/:hash/, SAMPLE_FILE_ID + '?t='+started_at);
+  console.log("Test speed " + url);
+  var download = new Image();
+  download.onload = function () {
+    var ended_at = (new Date()).getTime();
+    var duration = (ended_at - started_at) / 1000;
+    var speed_kbps = (SAMPLE_FILE_SIZE /(duration * 1024)).toFixed(2);
+    console.log(gateways[i] + ': ' + speed_kbps + ' ' + duration);
+    $('#gw_' + i + ' span span:nth-child(1)').text(speed_kbps + ' KB/s');
+    if (speed_kbps > 500) {
+      $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-success');
+    } else if (speed_kbps > 200) {
+      $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-warning');
+    } else {
+      $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-danger');
+    }
+  }
+
+  download.onerror = function (err, msg) {
+    console.log(gateways[i].url + ' download failed.');
+    $('#gw_' + i + ' span span:nth-child(1)').text('failed').attr('class', 'badge badge-secondary');
+  }
+  download.src = url;
 }
 
 function extract_cid(input) {

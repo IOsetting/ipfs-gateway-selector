@@ -2,7 +2,7 @@ var L = {
 	'en' : {
 		'IPFS Gateway Selector' : 'IPFS Gateway Selector',
 		'Input the CID' : 'Input the CID',
-		'Reload Gateways' : 'Reload Gateways',
+		'Reload' : 'Reload',
 		'Configurations' : 'Configurations',
 		'Gateway Source' : 'Gateway Source',
 		'Probe CID' : 'Probe CID',
@@ -10,12 +10,13 @@ var L = {
 		'History' : 'History',
 		'Clear' : 'Clear',
 		'Gateways' : 'Gateways',
-		'Retest' : 'Retest'
+		'Lag Test' : 'Lag Test',
+		'Speed Test' : 'Speed Test'
 	},
 	'zh-cn' : {
 		'IPFS Gateway Selector' : 'IPFS下载网关选择',
 		'Input the CID' : 'CID',
-		'Reload Gateways' : '刷新列表',
+		'Reload' : '刷新列表',
 		'Configurations' : '配置',
 		'Gateway Source' : '网关来源',
 		'Probe CID' : '探测CID',
@@ -23,6 +24,7 @@ var L = {
 		'History' : '访问历史',
 		'Clear' : '清空',
 		'Gateways' : '网关列表',
-		'Retest' : '重新测速'
+		'Lag Test' : '延迟测试',
+		'Speed Test' : '带宽测试'
 	}
 };
