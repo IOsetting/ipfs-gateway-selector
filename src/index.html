@@ -25,7 +25,7 @@
       <span class="text-muted">
         <p>
           Designed and built by <a href="https://github.com/iosetting">IOsetting</a>. 
-          Currently <a href="https://github.com/iosetting/ipfs-gateway-selector">v1.0.2</a>. Code licensed GPL-3.0.
+          Currently <a href="https://github.com/iosetting/ipfs-gateway-selector">v1.0.3</a>. Code licensed GPL-3.0.
         </p>
       </span>
     </div>
@@ -85,15 +85,12 @@
       </div>
 
       <div class="mb-3">
-        <label for="sample_probe_id">{{:#data['Probe CID']}}</label>
-        <input type="text" class="form-control" id="sample_probe_id" placeholder="" value="" required="">
-          <div class="invalid-feedback">
-            Probe CID is required.
-          </div>
+        <label for="probe_file">{{:#data['Probe Size']}}</label>
+        <select id="probe_file" class="form-control mb-2"></select>
       </div>
 
       <div class="row">
-        <div class="col-md-8 mb-3">
+        <div class="col-md-6 mb-3">
           <label for="timeout">{{:Timeout}}</label>
           <input type="text" class="form-control" id="timeout" placeholder="" required="">
         </div>
@@ -116,10 +113,30 @@
 <script>
 document.documentElement.lang = navigator.language;
 var BOOTUP_URL = window.location.href.substr(0, window.location.href.lastIndexOf('/'));
-var TIMEOUT = 2000;
-var PROBE_ID = 'Qmaisz6NMhDB51cCvNWa1GMS7LU1pAxdF4Ld6Ft9kZEP2a';
-var SAMPLE_FILE_ID = 'QmTH6JaaryUntMJf7Lw1YaH1qPKbAz9ca7gSkRZLRG5Fng/install-macos-drag-ipfs-drag.10ef3046.png';
-var SAMPLE_FILE_SIZE = 1525506;
+var TIMEOUT = 3000;
+var PROBE_ID = 'QmVyHMgZygMV8zRgrdFpGQNB17YnbaB9Dz82AJoGBeudd1';
+var PROBE_FILES = [
+  {
+    'name' : '256KB file',
+    'file_name' : 'jttw-00.txt',
+    'size' : 256720
+  },
+  {
+    'name' : '512KB file',
+    'file_name' : 'jttw-01.txt',
+    'size' : 511749
+  },
+  {
+    'name' : '1MB file',
+    'file_name' : 'jttw-02.txt',
+    'size' : 1050518
+  },
+  {
+    'name' : '2MB file',
+    'file_name' : 'jttw-03.txt',
+    'size' : 2139907
+  }];
+
 var INLINE_GATEWAYS = [
 	  "https://ipfs.io/ipfs/:hash",
 	  "https://dweb.link/ipfs/:hash",
@@ -167,7 +184,8 @@ var INLINE_GATEWAYS = [
 	  "https://ipfs.k1ic.com/ipfs/:hash",
 	  "https://ipfs.drink.cafe/ipfs/:hash",
 	  "https://ipfs.azurewebsites.net/ipfs/:hash",
-	  "https://gw.ipfspin.com/ipfs/:hash"
+	  "https://gw.ipfspin.com/ipfs/:hash",
+    "https://ipfs.robotics.bmstu.ru/ipfs/:hash"
   ];
 var GATEWAY_SOURCES = {
     "Built-in Gateways": "[built-in list]",
@@ -213,14 +231,17 @@ $(document).ready(function() {
   $('#gateway_source_selector').val(GATEWAY_SOURCES[source_selected]).change();
   localStorage.setItem('source_selected', source_selected);
 
-  $('#sample_probe_id').val(PROBE_ID);
+  $('#probe_file').empty();
+  for (var i in PROBE_FILES) {
+    $('#probe_file').append('<option value="'+i+'">'+PROBE_FILES[i].name+'</option>');
+  }
+  $('#probe_file').val(0);
 
   var cid = extract_cid(queryParams.get('cid'));
   $('#cid').attr("value", cid).on("paste", function(e){
     var element = this;
     setTimeout(function () {
       var text = $(element).val();
-      console.log(text);
       $(element).val(extract_cid(text));
       console.log(extract_cid(text));
     }, 100);
@@ -314,34 +335,34 @@ function test_all_lag() {
 }
 
 function test_lag(i) {
-  var url = gateways[i].url.replace(/:hash/, $('#sample_probe_id').val());
-  console.log("Test lag: " + url);
   $('#gw_' + i + ' span span:nth-child(2)').empty();
-  var started_at = (new Date()).getTime();
-  $.ajax({
-    url: url,
-    method: 'GET',
-    timeout: $('#timeout').val(),
-    dataType: 'text'
-  }).done(function(data) {
-    var latency = (new Date()).getTime() - started_at;
-    gateways[i].lag = latency;
-    setTimeout(function () {
+  gateways[i].lag = -1;
+
+  var task = {
+      url: gateways[i].url.replace(/:hash/, PROBE_ID + '/1-byte.txt'),
+      method: 'GET',
+      timeout: parseInt($('#timeout').val()),
+      dataType: 'text',
+      cache: false
+    };
+  task.success = function(data, textStatus, jqXHR, t) {
+      var latency = (new Date()).getTime() - t;
+      gateways[i].lag = latency;
       $('#gw_' + i + ' span span:nth-child(2)').text(latency + ' ms');
-      if (latency < 300) {
+      if (latency < 500) {
         $('#gw_' + i + ' span span:nth-child(2)').attr('class', 'badge badge-success');
-      } else if (latency < 600) {
+      } else if (latency < 1000) {
         $('#gw_' + i + ' span span:nth-child(2)').attr('class', 'badge badge-warning');
       } else {
         $('#gw_' + i + ' span span:nth-child(2)').attr('class', 'badge badge-danger');
       }
-    }, 200);
+    };
+  task.error = function(jqXHR, textStatus, errorThrown) {
+      console.log(gateways[i].domain + ':' + jqXHR.statusText);
+      $('#gw_' + i + ' span span:nth-child(2)').text(jqXHR.statusText).attr('class', 'badge badge-secondary');
+    };
 
-  }).fail(function(jqXHR, textStatus, errorThrown) {
-    gateways[i].lag = -1;
-    $('#gw_' + i + ' span span:nth-child(2)').text(jqXHR.statusText).attr('class', 'badge badge-secondary');
-  });
-
+  addAjax(task);
 }
 
 function test_all_speed() {
@@ -353,38 +374,45 @@ function test_all_speed() {
 }
 
 function test_speed(i) {
+  var file_path = PROBE_ID + '/' + PROBE_FILES[$('#probe_file').val()].file_name;
   $('#gw_' + i + ' span span:nth-child(1)').empty();
-  var started_at = (new Date()).getTime();
-  var url = gateways[i].url.replace(/:hash/, SAMPLE_FILE_ID + '?t='+started_at);
-  console.log("Test speed " + url);
-  var download = new Image();
-  download.onload = function () {
-    var ended_at = (new Date()).getTime();
-    var duration = (ended_at - started_at) / 1000;
-    var speed_kbps = (SAMPLE_FILE_SIZE /(duration * 1024)).toFixed(2);
-    console.log(gateways[i] + ': ' + speed_kbps + ' ' + duration);
-    $('#gw_' + i + ' span span:nth-child(1)').text(speed_kbps + ' KB/s');
-    if (speed_kbps > 500) {
-      $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-success');
-    } else if (speed_kbps > 200) {
-      $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-warning');
-    } else {
-      $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-danger');
-    }
-  }
 
-  download.onerror = function (err, msg) {
-    console.log(gateways[i].url + ' download failed.');
-    $('#gw_' + i + ' span span:nth-child(1)').text('failed').attr('class', 'badge badge-secondary');
-  }
-  download.src = url;
+  var task = {
+      url: gateways[i].url.replace(/:hash/, file_path),
+      method: 'GET',
+      timeout: parseInt($('#timeout').val()) + 2000,
+      dataType: 'text',
+      cache: false
+    };
+  task.success = function(data, textStatus, jqXHR, t) {
+      var duration = ((new Date()).getTime() - t) / 1000;
+      var speed_kbps = (PROBE_FILES[$('#probe_file').val()].size /(duration * 1024)).toFixed(2);
+      console.log(gateways[i] + ': ' + speed_kbps + ' ' + duration);
+      $('#gw_' + i + ' span span:nth-child(1)').text(speed_kbps + ' KB/s');
+      if (speed_kbps > 500) {
+        $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-success');
+      } else if (speed_kbps > 200) {
+        $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-warning');
+      } else {
+        $('#gw_' + i + ' span span:nth-child(1)').attr('class', 'badge badge-danger');
+      }
+    };
+  task.error = function(jqXHR, textStatus, errorThrown) {
+      console.log(gateways[i].domain + ':' + jqXHR.statusText);
+      $('#gw_' + i + ' span span:nth-child(1)').text(jqXHR.statusText).attr('class', 'badge badge-secondary');
+    };
+  addAjax(task);
 }
 
 function extract_cid(input) {
   if (is_null(input)) {
     return '';
   }
-  var matches = input.match(/Qm[A-Za-z0-9]+/);
+  // length=46 prefix="Qm", it's a CIDv0
+  // length=52 prefix="12D"
+  // length=59 prefix="ba", all lowercase
+  // length=53 prefix="16U"
+  var matches = input.match(/Qm[A-Za-z0-9]{44}|ba[a-z0-9]{57}|12D[A-Za-z0-9]{49}|16U[A-Za-z0-9]{50}/);
   if (matches !== null && matches.length > 0) {
     return matches[0];
   }
@@ -443,7 +471,6 @@ function detect_language() {
   }
 }
 
-
 function is_null(v) {
   return (v === undefined || v === null);
 }
@@ -452,6 +479,42 @@ function shorten(v, len) {
   var tail = len - 8;
   if (tail < 4) tail = 4;
   return v.substr(0, 5) + '...' + v.substr(cid.length - tail, tail);
+}
+
+// AJAX Queue
+var ajaxReqs = 0;
+var ajaxQueue = [];
+var ajaxActive = 0;
+var ajaxMaxConc = 4;
+function addAjax(obj) {
+    ajaxReqs++;
+    var oldSuccess = obj.success;
+    var oldError = obj.error;
+    var callback = function() {
+        ajaxReqs--;
+        if (ajaxActive === ajaxMaxConc && ajaxQueue.length > 0) {
+            var o = ajaxQueue.shift();
+            o.t = (new Date()).getTime();
+            $.ajax(o);
+        } else {
+            ajaxActive--;
+        }
+    }
+    obj.success = function(resp, textStatus, jqXHR) {
+        if (oldSuccess) oldSuccess(resp, textStatus, jqXHR, this.t);
+        callback();
+    };
+    obj.error = function(xhr, status, error) {
+        if (oldError) oldError(xhr, status, error);
+        callback();
+    };
+    if (ajaxActive === ajaxMaxConc) {
+        ajaxQueue.push(obj);
+    } else {
+        ajaxActive++;
+        obj.t = (new Date()).getTime();
+        $.ajax(obj);
+    }
 }
 
 </script>
