@@ -410,9 +410,9 @@ function extract_cid(input) {
   }
   // length=46 prefix="Qm", it's a CIDv0
   // length=52 prefix="12D"
-  // length=59 prefix="ba", all lowercase
+  // length=[59,111] prefix="ba", all lowercase
   // length=53 prefix="16U"
-  var matches = input.match(/Qm[A-Za-z0-9]{44}|ba[a-z0-9]{57}|12D[A-Za-z0-9]{49}|16U[A-Za-z0-9]{50}/);
+  var matches = input.match(/Qm[A-Za-z0-9]{44}|ba[a-z0-9]{57,109}|12D[A-Za-z0-9]{49}|16U[A-Za-z0-9]{50}/);
   if (matches !== null && matches.length > 0) {
     return matches[0];
   }
